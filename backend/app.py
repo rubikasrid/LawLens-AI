@@ -29,6 +29,26 @@ except ImportError:
 # Initialize FastAPI App
 app = FastAPI(title="LawLens AI Backend API")
 
+import sys
+from pathlib import Path
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+# Ensure the backend directory is in Python's search path
+BACKEND_DIR = Path(__file__).resolve().parent
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
+
+# Import local modules
+import models
+from database import engine
+
+# Initialize FastAPI App
+app = FastAPI(title="LawLens AI Backend API")
+
+# Automatically create database tables on startup
+models.Base.metadata.create_all(bind=engine)
+
 # CORS Configuration
 app.add_middleware(
     CORSMiddleware,
