@@ -7,7 +7,9 @@ import urllib.request
 import urllib.parse
 from pathlib import Path
 from typing import Optional, Any, Dict, List
-
+from pathlib import Path
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi import FastAPI, HTTPException, UploadFile, File, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
@@ -416,10 +418,18 @@ def generate_pdf_file(summary_text: str) -> Path:
 
 # --- API ENDPOINTS ---
 
+BASE_DIR = Path(__file__).resolve().parent
+FRONTEND_DIR = BASE_DIR.parent / "frontend"
+
 @app.get("/")
-def root():
+def read_root():
+    index_path = FRONTEND_DIR / "index.html"
+    if index_path.exists():
+        return FileResponse(index_path)
     return {"status": "ok", "message": "LawLens Backend API Running"}
 
+if FRONTEND_DIR.exists():
+    app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="static")
 
 @app.get("/history")
 def get_history():
