@@ -39,9 +39,16 @@ BACKEND_DIR = Path(__file__).resolve().parent
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
-# Import local modules
+import os
+import sys
+
+# Add backend folder to Python path so Render can locate local files
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 import models  # type: ignore
-from database import engine
+from database import engine  # type: ignore
+
+models.Base.metadata.create_all(bind=engine)
 
 # Initialize FastAPI App
 app = FastAPI(title="LawLens AI Backend API")
