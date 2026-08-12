@@ -1,29 +1,42 @@
 import os
-import sys
-
-# Ensure backend folder is in Python search path to resolve local imports on Render
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
+from pathlib import Path
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
+from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, Session
 from pydantic import BaseModel
 
-# Local module imports
-import models  # type: ignore
-from database import engine, SessionLocal  # type: ignore
+# --- 1. DATABASE CONFIGURATION ---
+BASE_DIR = Path(__file__).resolve().parent
+DB_PATH = BASE_DIR / "lawlens.db"
+SQLALCHEMY_DATABASE_URL = f"sqlite:///{DB_PATH}"
 
-# Automatically create database tables on startup
-models.Base.metadata.create_all(bind=engine)
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL, 
+    connect_args={"check_same_thread": False}
+)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
 
-# Initialize FastAPI Application
+# --- 2. DATABASE MODELS (Embedded directly to avoid import errors) ---
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True, nullable=False)
+    password = Column(String, nullable=False)
+
+# Create Database Tables Automatically
+Base.metadata.create_all(bind=engine)
+
+# --- 3. FASTAPI APP SETUP ---
 app = FastAPI(
     title="LawLens AI Backend API",
     description="API for LawLens AI application",
     version="1.0.0"
 )
 
-# Enable Cross-Origin Resource Sharing (CORS)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -32,7 +45,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Database Session Dependency
+# Dependency to get DB session
 def get_db():
     db = SessionLocal()
     try:
@@ -40,12 +53,12 @@ def get_db():
     finally:
         db.close()
 
-# Request Schemas
+# Request Schema
 class UserAuthSchema(BaseModel):
     username: str
     password: str
 
-# API Endpoints
+# --- 4. API ROUTES ---
 @app.get("/")
 def root():
     return {"status": "ok", "message": "LawLens AI Backend API is operational"}
@@ -56,28 +69,24 @@ def health_check():
 
 @app.post("/register")
 def register(user: UserAuthSchema, db: Session = Depends(get_db)):
-    # Check if user already exists
-    existing_user = db.query(models.User).filter(models.User.username == user.username).first()
+    existing_user = db.query(User).filter(User.username == user.username).first()
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Username already exists"
         )
     
-    # Register new user
-    new_user = models.User(username=user.username, password=user.password)
+    new_user = User(username=user.username, password=user.password)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    
     return {"message": "User registered successfully", "username": new_user.username}
 
 @app.post("/login")
 def login(user: UserAuthSchema, db: Session = Depends(get_db)):
-    # Authenticate user credentials
-    db_user = db.query(models.User).filter(
-        models.User.username == user.username,
-        models.User.password == user.password
+    db_user = db.query(User).filter(
+        User.username == user.username,
+        User.password == user.password
     ).first()
     
     if not db_user:
