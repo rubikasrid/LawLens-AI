@@ -89,7 +89,15 @@
 </div>
 
 <script>
-    const API_BASE = "https://lawlens-ai.onrender.com";
+    // Automatically switches between Local and Netlify Render endpoints
+    const isLocal = window.location.hostname === "127.0.0.1" || 
+                    window.location.hostname === "localhost" || 
+                    window.location.protocol === "file:";
+
+    const API_BASE = isLocal 
+        ? "http://127.0.0.1:8000" 
+        : "https://lawlens-ai.onrender.com";
+
     let isRegister = false;
 
     function toggleMode() {
@@ -145,7 +153,9 @@
             }
         } catch (err) {
             console.error(err);
-            showMsg("Could not connect to server. Open backend link first to wake it up.");
+            showMsg(isLocal 
+                ? "Could not connect to local server. Make sure Uvicorn is running."
+                : "Could not connect to server. Open backend link first to wake it up.");
         }
     }
 </script>
