@@ -129,7 +129,7 @@
 
             if (!username || !password) return alert("Please fill in all fields.");
 
-            const endpoint = isRegister ? "http://127.0.0.1:8001/register" : "http://127.0.0.1:8001/login";
+            const endpoint = isRegister ? "https://lawlens-ai.onrender.com/register" : "https://lawlens-ai.onrender.com/login";
             const payload = isRegister ? { username, email, password } : { username, password };
 
             try {
