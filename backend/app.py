@@ -57,6 +57,7 @@ def get_db():
 class UserAuthSchema(BaseModel):
     username: str
     password: str
+    email: str | None = None
 
 # --- 4. API ROUTES ---
 @app.get("/")
