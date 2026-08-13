@@ -3,37 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LawLens AI</title>
+    <title>LawLens</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             background-color: #6c757d;
             margin: 0;
-            padding: 0;
+            padding: 20px;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 90vh;
+        }
+        .lang-bar {
+            margin-bottom: 18px;
+            background: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+        .lang-bar label {
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 8px;
+            color: #1a2530;
+        }
+        .lang-bar select {
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            font-size: 14px;
         }
         .container {
             background-color: #ffffff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            width: 350px;
+            padding: 35px 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            width: 380px;
             text-align: center;
         }
         h2 {
-            margin-bottom: 20px;
-            color: #1a2530;
+            margin-top: 0;
+            margin-bottom: 24px;
+            color: #0f172a;
+            font-size: 26px;
         }
-        input {
+        input[type="text"], input[type="email"], input[type="password"], input[type="file"], select {
             width: 100%;
-            padding: 12px;
+            padding: 12px 14px;
             margin: 8px 0;
             box-sizing: border-box;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 15px;
         }
         button {
             width: 100%;
@@ -41,38 +65,77 @@
             color: white;
             padding: 12px;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
             font-size: 16px;
-            margin-top: 10px;
+            font-weight: 500;
+            margin-top: 12px;
         }
         button:hover {
-            background-color: #081b4d;
+            background-color: #071948;
+        }
+        .export-btn {
+            background-color: #16a34a;
+            margin-top: 10px;
+        }
+        .export-btn:hover {
+            background-color: #15803d;
         }
         .toggle-btn {
-            margin-top: 15px;
-            color: #0056b3;
+            margin-top: 16px;
+            color: #0284c7;
             cursor: pointer;
             text-decoration: underline;
+            font-size: 15px;
             display: inline-block;
         }
-        .error-msg {
-            color: #d9534f;
+        .msg {
             font-size: 14px;
-            margin-top: 10px;
+            margin-top: 12px;
             display: none;
+        }
+        .error-msg {
+            color: #dc2626;
         }
         .success-msg {
             color: #5cb85c;
-            font-size: 14px;
-            margin-top: 10px;
+        }
+        .result-box {
+            margin-top: 15px;
+            text-align: left;
+            background: #f8fafc;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
             display: none;
+            max-height: 220px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .field-label {
+            display: block;
+            text-align: left;
+            font-size: 13px;
+            font-weight: bold;
+            color: #475569;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
 
-<div class="container">
+<!-- UI INTERFACE LANGUAGE SELECTOR -->
+<div class="lang-bar">
+    <label for="languageSelect">🌐 UI Language / மொழி / भाषा:</label>
+    <select id="languageSelect" onchange="changeLanguage()">
+        <option value="en">English</option>
+        <option value="ta">தமிழ் (Tamil)</option>
+        <option value="hi">हिंदी (Hindi)</option>
+    </select>
+</div>
+
+<!-- 1. AUTHENTICATION CARD -->
+<div class="container" id="auth-box">
     <h2 id="form-title">Login to LawLens</h2>
     
     <input type="text" id="username" placeholder="Username" required>
@@ -80,44 +143,148 @@
     <input type="password" id="password" placeholder="Password" required>
 
     <button id="submit-btn" onclick="handleSubmit()">Login</button>
-
-    <div id="msg-box" class="error-msg"></div>
+    <div id="msg-box" class="msg"></div>
 
     <div class="toggle-btn" id="toggle-link" onclick="toggleMode()">
         Need an account? Register
     </div>
 </div>
 
+<!-- 2. DASHBOARD / FILE UPLOAD CARD -->
+<div class="container" id="dashboard-box" style="display: none;">
+    <h2 id="dash-title">LawLens Dashboard</h2>
+    <p id="welcome-msg" style="color: #475569; font-weight: bold; margin-bottom: 20px;"></p>
+    
+    <hr style="margin: 20px 0; border: 0; border-top: 1px solid #e2e8f0;">
+    
+    <h3 id="upload-header" style="color: #0f172a; margin-bottom: 15px;">Upload Legal Document</h3>
+    
+    <input type="file" id="doc-file" accept=".pdf,.txt,.docx">
+
+    <!-- OUTPUT LANGUAGE SELECTION -->
+    <label class="field-label" id="output-lang-label">Output Language:</label>
+    <select id="output-lang">
+        <option value="en">English</option>
+        <option value="ta">தமிழ் (Tamil)</option>
+        <option value="hi">हिंदी (Hindi)</option>
+    </select>
+
+    <button id="upload-btn" onclick="handleUpload()">Upload & Analyze</button>
+
+    <div id="dash-msg-box" class="msg"></div>
+
+    <div id="result-box" class="result-box">
+        <strong id="analysis-header" style="color: #0f172a;">Analysis Result:</strong>
+        <p id="result-text" style="margin-top: 6px; font-size: 14px; color: #334155; margin-bottom: 0;"></p>
+    </div>
+
+    <!-- EXPORT SUMMARY BUTTON -->
+    <button id="export-btn" class="export-btn" onclick="exportSummary()" style="display: none;">📥 Export Summary (.txt)</button>
+
+    <button id="logout-btn" onclick="logout()" style="background-color: #6c757d; margin-top: 15px;">Logout</button>
+</div>
+
 <script>
-    // Automatically switches between Local and Netlify Render endpoints
-    const isLocal = window.location.hostname === "127.0.0.1" || 
-                    window.location.hostname === "localhost" || 
-                    window.location.protocol === "file:";
-
-    const API_BASE = isLocal 
-        ? "http://127.0.0.1:8000" 
-        : "https://lawlens-ai.onrender.com";
-
+    const API_BASE = "http://127.0.0.1:8000";
     let isRegister = false;
+    let currentLang = "en";
+
+    const i18n = {
+        en: {
+            loginTitle: "Login to LawLens",
+            regTitle: "Register for LawLens",
+            usernamePlaceholder: "Username",
+            emailPlaceholder: "Email (For Register only)",
+            passwordPlaceholder: "Password",
+            loginBtn: "Login",
+            regBtn: "Register",
+            needAccount: "Need an account? Register",
+            alreadyAccount: "Already have an account? Login",
+            dashTitle: "LawLens Dashboard",
+            welcomePrefix: "Welcome, ",
+            uploadHeader: "Upload Legal Document",
+            uploadBtn: "Upload & Analyze",
+            outputLangLabel: "Output Language:",
+            exportBtn: "📥 Export Summary (.txt)",
+            analysisHeader: "Analysis Result:",
+            logoutBtn: "Logout"
+        },
+        ta: {
+            loginTitle: "LawLens-இல் உள்நுழையவும்",
+            regTitle: "LawLens-இல் பதிவு செய்யவும்",
+            usernamePlaceholder: "பயனர் பெயர்",
+            emailPlaceholder: "மின்னஞ்சல் (பதிவு செய்ய மட்டும்)",
+            passwordPlaceholder: "கடவுச்சொல்",
+            loginBtn: "உள்நுழை",
+            regBtn: "பதிவு செய்",
+            needAccount: "கணக்கு இல்லையா? பதிவு செய்க",
+            alreadyAccount: "ஏற்கனவே கணக்கு உள்ளதா? உள்நுழைக",
+            dashTitle: "LawLens முகப்பு பலகை",
+            welcomePrefix: "வரவேற்கிறோம், ",
+            uploadHeader: "சட்ட ஆவணத்தைப் பதிவேற்றவும்",
+            uploadBtn: "பதிவேற்றி பகுப்பாய்வு செய்க",
+            outputLangLabel: "வெளியீட்டு மொழி:",
+            exportBtn: "📥 சுருக்கத்தைப் பதிவிறக்கு (.txt)",
+            analysisHeader: "பகுப்பாய்வு முடிவு:",
+            logoutBtn: "வெளியேறு"
+        },
+        hi: {
+            loginTitle: "LawLens में लॉगिन करें",
+            regTitle: "LawLens के लिए रजिस्टर करें",
+            usernamePlaceholder: "उपयोगकर्ता नाम",
+            emailPlaceholder: "ईमेल (केवल रजिस्टर के लिए)",
+            passwordPlaceholder: "पासवर्ड",
+            loginBtn: "लॉगिन करें",
+            regBtn: "रजिस्टर करें",
+            needAccount: "खाता चाहिए? रजिस्टर करें",
+            alreadyAccount: "पहले से खाता है? लॉगिन करें",
+            dashTitle: "LawLens डैशबोर्ड",
+            welcomePrefix: "स्वागत है, ",
+            uploadHeader: "कानूनी दस्तावेज़ अपलोड करें",
+            uploadBtn: "अपलोड और विश्लेषण करें",
+            outputLangLabel: "आउटपुट भाषा:",
+            exportBtn: "📥 सारांश निर्यात करें (.txt)",
+            analysisHeader: "विश्लेषण परिणाम:",
+            logoutBtn: "लॉगआउट"
+        }
+    };
+
+    function changeLanguage() {
+        currentLang = document.getElementById("languageSelect").value;
+        const t = i18n[currentLang];
+
+        document.getElementById("form-title").innerText = isRegister ? t.regTitle : t.loginTitle;
+        document.getElementById("username").placeholder = t.usernamePlaceholder;
+        document.getElementById("email").placeholder = t.emailPlaceholder;
+        document.getElementById("password").placeholder = t.passwordPlaceholder;
+        document.getElementById("submit-btn").innerText = isRegister ? t.regBtn : t.loginBtn;
+        document.getElementById("toggle-link").innerText = isRegister ? t.alreadyAccount : t.needAccount;
+
+        document.getElementById("dash-title").innerText = t.dashTitle;
+        document.getElementById("upload-header").innerText = t.uploadHeader;
+        document.getElementById("upload-btn").innerText = t.uploadBtn;
+        document.getElementById("output-lang-label").innerText = t.outputLangLabel;
+        document.getElementById("export-btn").innerText = t.exportBtn;
+        document.getElementById("analysis-header").innerText = t.analysisHeader;
+        document.getElementById("logout-btn").innerText = t.logoutBtn;
+    }
 
     function toggleMode() {
         isRegister = !isRegister;
-        document.getElementById("form-title").innerText = isRegister ? "Register for LawLens" : "Login to LawLens";
-        document.getElementById("submit-btn").innerText = isRegister ? "Register" : "Login";
         document.getElementById("email").style.display = isRegister ? "block" : "none";
-        document.getElementById("toggle-link").innerText = isRegister ? "Already have an account? Login" : "Need an account? Register";
+        changeLanguage();
         hideMsg();
     }
 
-    function showMsg(msg, isError = true) {
-        const box = document.getElementById("msg-box");
+    function showMsg(msg, isError = false, targetBox = "msg-box") {
+        const box = document.getElementById(targetBox);
         box.innerText = msg;
-        box.className = isError ? "error-msg" : "success-msg";
+        box.className = `msg ${isError ? 'error-msg' : 'success-msg'}`;
         box.style.display = "block";
     }
 
-    function hideMsg() {
-        document.getElementById("msg-box").style.display = "none";
+    function hideMsg(targetBox = "msg-box") {
+        document.getElementById(targetBox).style.display = "none";
     }
 
     async function handleSubmit() {
@@ -127,7 +294,7 @@
         const email = document.getElementById("email").value.trim();
 
         if (!username || !password) {
-            showMsg("Please enter username and password.");
+            showMsg("Please enter username and password.", true);
             return;
         }
 
@@ -144,19 +311,81 @@
             const data = await response.json();
 
             if (!response.ok) {
-                showMsg(data.detail || "Server error.");
+                showMsg(data.detail || "Server error.", true);
             } else {
-                showMsg(data.message || (isRegister ? "Registered successfully!" : "Logged in!"), false);
+                showMsg(data.message || (isRegister ? "Registered successfully!" : "Logged in successfully"), false);
                 if (isRegister) {
                     setTimeout(() => toggleMode(), 1200);
+                } else {
+                    setTimeout(() => {
+                        document.getElementById("auth-box").style.display = "none";
+                        document.getElementById("dashboard-box").style.display = "block";
+                        const t = i18n[currentLang];
+                        document.getElementById("welcome-msg").innerText = `${t.welcomePrefix}${username}!`;
+                    }, 800);
                 }
             }
         } catch (err) {
-            console.error(err);
-            showMsg(isLocal 
-                ? "Could not connect to local server. Make sure Uvicorn is running."
-                : "Could not connect to server. Open backend link first to wake it up.");
+            showMsg("Could not connect to backend server.", true);
         }
+    }
+
+    async function handleUpload() {
+        hideMsg("dash-msg-box");
+        const fileInput = document.getElementById("doc-file");
+        if (!fileInput.files.length) {
+            showMsg("Please select a file first.", true, "dash-msg-box");
+            return;
+        }
+
+        const selectedOutputLang = document.getElementById("output-lang").value;
+
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+        formData.append("target_lang", selectedOutputLang);
+
+        try {
+            const response = await fetch(`${API_BASE}/upload`, {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                showMsg(data.detail || "Upload failed.", true, "dash-msg-box");
+            } else {
+                showMsg("File uploaded and analyzed successfully!", false, "dash-msg-box");
+                document.getElementById("result-box").style.display = "block";
+                document.getElementById("result-text").innerText = data.summary || data.message;
+                
+                // SHOW EXPORT BUTTON
+                document.getElementById("export-btn").style.display = "block";
+            }
+        } catch (err) {
+            showMsg("Error uploading document.", true, "dash-msg-box");
+        }
+    }
+
+    function exportSummary() {
+        const textContent = document.getElementById("result-text").innerText;
+        if (!textContent) return;
+
+        const blob = new Blob([textContent], { type: "text/plain;charset=utf-8" });
+        const downloadLink = document.createElement("a");
+        downloadLink.href = URL.createObjectURL(blob);
+        downloadLink.download = `LawLens_Analysis_${new Date().toISOString().slice(0, 10)}.txt`;
+        downloadLink.click();
+    }
+
+    function logout() {
+        document.getElementById("dashboard-box").style.display = "none";
+        document.getElementById("auth-box").style.display = "block";
+        document.getElementById("result-box").style.display = "none";
+        document.getElementById("export-btn").style.display = "none";
+        document.getElementById("username").value = "";
+        document.getElementById("password").value = "";
+        hideMsg();
     }
 </script>
 
