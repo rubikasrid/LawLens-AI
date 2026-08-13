@@ -2,278 +2,153 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>LawLens - Legal Analyzer (Authenticated)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LawLens AI</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 900px; margin: 30px auto; padding: 20px; background: #f8fafc; color: #1e293b; }
-        .card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        h1 { color: #0f172a; margin-bottom: 5px; }
-        .subtitle { color: #64748b; margin-top: 0; margin-bottom: 20px; }
-        input, select, button { padding: 10px 14px; border-radius: 6px; font-size: 14px; margin-bottom: 10px; }
-        input { border: 1px solid #cbd5e1; width: 100%; box-sizing: border-box; }
-        button { background-color: #2563eb; color: white; border: none; font-weight: bold; cursor: pointer; width: 100%; }
-        button:hover { background-color: #1d4ed8; }
-        .export-btn { background-color: #059669; }
-        .export-btn:hover { background-color: #047857; }
-        .risk-item { border: 1px solid #e2e8f0; border-left: 4px solid #94a3b8; padding: 12px; margin-bottom: 10px; border-radius: 4px; background: #fafafa; }
-        .risk-High { border-left-color: #dc2626; }
-        .risk-Medium { border-left-color: #d97706; }
-        .risk-Low { border-left-color: #16a34a; }
-        .badge { float: right; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
-        .badge-High { background: #fef2f2; color: #dc2626; }
-        .badge-Medium { background: #fffbeb; color: #d97706; }
-        .badge-Low { background: #f0fdf4; color: #16a34a; }
-        #authSection, #appSection { display: none; }
-        .auth-toggle { text-align: center; color: #2563eb; cursor: pointer; text-decoration: underline; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
-        th { background: #f1f5f9; color: #475569; }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #6c757d;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 350px;
+            text-align: center;
+        }
+        h2 {
+            margin-bottom: 20px;
+            color: #1a2530;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            background-color: #0b2567;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #081b4d;
+        }
+        .toggle-btn {
+            margin-top: 15px;
+            color: #0056b3;
+            cursor: pointer;
+            text-decoration: underline;
+            display: inline-block;
+        }
+        .error-msg {
+            color: #d9534f;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+        }
+        .success-msg {
+            color: #5cb85c;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+        }
     </style>
 </head>
 <body>
 
-    <h1>LawLens AI Assistant</h1>
-    <p class="subtitle">Legal Document Summarization & Risk Analysis System</p>
+<div class="container">
+    <h2 id="form-title">Login to LawLens</h2>
+    
+    <input type="text" id="username" placeholder="Username" required>
+    <input type="email" id="email" placeholder="Email (For Register only)" style="display: none;">
+    <input type="password" id="password" placeholder="Password" required>
 
-    <!-- AUTHENTICATION FORM -->
-    <div id="authSection" class="card" style="max-width: 400px; margin: 0 auto;">
-        <h2 id="authTitle">Login to LawLens</h2>
-        <input type="text" id="authUsername" placeholder="Username">
-        <input type="email" id="authEmail" placeholder="Email (For Register only)" style="display: none;">
-        <input type="password" id="authPassword" placeholder="Password">
-        <button id="authBtn" onclick="handleAuth()">Login</button>
-        <p class="auth-toggle" onclick="toggleAuthMode()" id="authToggle">Need an account? Register</p>
+    <button id="submit-btn" onclick="handleSubmit()">Login</button>
+
+    <div id="msg-box" class="error-msg"></div>
+
+    <div class="toggle-btn" id="toggle-link" onclick="toggleMode()">
+        Need an account? Register
     </div>
+</div>
 
-    <!-- MAIN APP INTERFACE -->
-    <div id="appSection">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <span>Welcome, <strong id="userDisplay"></strong>!</span>
-            <button onclick="logout()" style="width: auto; background: #ef4444;">Logout</button>
-        </div>
+<script>
+    const API_BASE = "https://lawlens-ai.onrender.com";
+    let isRegister = false;
 
-        <div class="card">
-            <h3>Upload Document (.pdf, .docx)</h3>
-            <input type="file" id="fileInput" accept=".pdf,.docx">
-            
-            <label for="langSelect"><strong>Output Language:</strong></label>
-            <select id="langSelect" style="width: 100%;">
-                <option value="ta">Tamil (தமிழ்)</option>
-                <option value="hi">Hindi (हिन्दी)</option>
-            </select>
+    function toggleMode() {
+        isRegister = !isRegister;
+        document.getElementById("form-title").innerText = isRegister ? "Register for LawLens" : "Login to LawLens";
+        document.getElementById("submit-btn").innerText = isRegister ? "Register" : "Login";
+        document.getElementById("email").style.display = isRegister ? "block" : "none";
+        document.getElementById("toggle-link").innerText = isRegister ? "Already have an account? Login" : "Need an account? Register";
+        hideMsg();
+    }
 
-            <button id="uploadBtn" onclick="uploadFile()">Analyze Document</button>
-            <p id="loading" style="display:none; color:#2563eb;">Analyzing document and translating output...</p>
-        </div>
+    function showMsg(msg, isError = true) {
+        const box = document.getElementById("msg-box");
+        box.innerText = msg;
+        box.className = isError ? "error-msg" : "success-msg";
+        box.style.display = "block";
+    }
 
-        <div id="results" style="display: none;">
-            <div class="card">
-                <h3>Executive Summary</h3>
-                <div id="summaryOutput"></div>
-                <button class="export-btn" onclick="exportPDF()" style="margin-top: 15px;">Export PDF Analysis Report</button>
-            </div>
+    function hideMsg() {
+        document.getElementById("msg-box").style.display = "none";
+    }
 
-            <div class="card">
-                <h3>Key Risk Clauses & Highlights</h3>
-                <div id="riskOutput"></div>
-            </div>
-        </div>
+    async function handleSubmit() {
+        hideMsg();
+        const username = document.getElementById("username").value.trim();
+        const password = document.getElementById("password").value.trim();
+        const email = document.getElementById("email").value.trim();
 
-        <div class="card">
-            <h3>Your Recent Uploads History</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Filename</th>
-                        <th>Risk Flags</th>
-                        <th>Analyzed At</th>
-                    </tr>
-                </thead>
-                <tbody id="historyTableBody">
-                    <tr><td colspan="3">Loading history...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <script>
-        let isRegister = false;
-        let currentAnalysis = {};
-
-        function checkAuth() {
-            const token = localStorage.getItem('token');
-            const username = localStorage.getItem('username');
-
-            if (token) {
-                document.getElementById('authSection').style.display = 'none';
-                document.getElementById('appSection').style.display = 'block';
-                document.getElementById('userDisplay').innerText = username;
-                loadHistory();
-            } else {
-                document.getElementById('authSection').style.display = 'block';
-                document.getElementById('appSection').style.display = 'none';
-            }
-        }
-
-        function toggleAuthMode() {
-            isRegister = !isRegister;
-            document.getElementById('authTitle').innerText = isRegister ? "Register for LawLens" : "Login to LawLens";
-            document.getElementById('authEmail').style.display = isRegister ? "block" : "none";
-            document.getElementById('authBtn').innerText = isRegister ? "Register" : "Login";
-            document.getElementById('authToggle').innerText = isRegister ? "Already have an account? Login" : "Need an account? Register";
-        }
-
-        async function handleAuth() {
-            const username = document.getElementById('authUsername').value;
-            const password = document.getElementById('authPassword').value;
-            const email = document.getElementById('authEmail').value;
-
-            if (!username || !password) return alert("Please fill in all fields.");
-
-            const endpoint = isRegister ? "https://lawlens-ai.onrender.com/register" : "https://lawlens-ai.onrender.com/login";
-            const payload = isRegister ? { username, email, password } : { username, password };
-
-            try {
-                const res = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-
-                if (res.ok) {
-                    if (isRegister) {
-                        alert("Account created successfully! Please login.");
-                        toggleAuthMode();
-                    } else {
-                        localStorage.setItem('token', data.token);
-                        localStorage.setItem('username', data.username);
-                        checkAuth();
-                    }
-                } else {
-                    alert("Auth error: " + (data.detail || "Failed"));
-                }
-            } catch (err) {
-                alert("Server error.");
-            }
-        }
-
-        function logout() {
-            localStorage.clear();
-            checkAuth();
-        }
-
-        async function loadHistory() {
-            const token = localStorage.getItem('token');
-            try {
-                const res = await fetch("http://127.0.0.1:8001/history", {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await res.json();
-                const tbody = document.getElementById('historyTableBody');
-                
-                if (!data.history || data.history.length === 0) {
-                    tbody.innerHTML = "<tr><td colspan='3'>No past uploads found.</td></tr>";
-                    return;
-                }
-
-                tbody.innerHTML = data.history.map(item => `
-                    <tr>
-                        <td><strong>${item.filename}</strong></td>
-                        <td>${item.risk_count} clauses flagged</td>
-                        <td>${item.created_at}</td>
-                    </tr>
-                `).join('');
-            } catch (err) {
-                console.error("Failed to fetch history.");
-            }
-        }
-
-        async function uploadFile() {
-            const file = document.getElementById('fileInput').files[0];
-            const targetLang = document.getElementById('langSelect').value;
-            const token = localStorage.getItem('token');
-            if (!file) return alert("Please select a file.");
-
-            const formData = new FormData();
-            formData.append("file", file);
-            formData.append("target_lang", targetLang);
-
-            document.getElementById('uploadBtn').disabled = true;
-            document.getElementById('loading').style.display = "block";
-            document.getElementById('results').style.display = "none";
-
-            try {
-                const response = await fetch("http://127.0.0.1:8001/upload", {
-                    method: "POST",
-                    headers: { 'Authorization': `Bearer ${token}` },
-                    body: formData
-                });
-                const data = await response.json();
-
-                if (response.ok) {
-                    currentAnalysis = data;
-                    document.getElementById('summaryOutput').innerText = data.summary;
-                    
-                    let riskHtml = "";
-                    if (data.risk_clauses.length === 0) {
-                        riskHtml = "<p>No specific high-risk clauses flagged.</p>";
-                    } else {
-                        data.risk_clauses.forEach(c => {
-                            riskHtml += `
-                                <div class="risk-item risk-${c.risk_level}">
-                                    <span class="badge badge-${c.risk_level}">${c.risk_level} Risk</span>
-                                    <strong>${c.category}</strong>
-                                    <p>"${c.clause_text}"</p>
-                                    <small><em>Recommendation: ${c.recommendation}</em></small>
-                                </div>`;
-                        });
-                    }
-                    document.getElementById('riskOutput').innerHTML = riskHtml;
-                    document.getElementById('results').style.display = "block";
-                    loadHistory();
-                } else {
-                    alert("Error: " + (data.detail || "Analysis failed"));
-                }
-            } catch (err) {
-                alert("Server error.");
-            } finally {
-                document.getElementById('uploadBtn').disabled = false;
-                document.getElementById('loading').style.display = "none";
-            }
-        }
-
-        async function exportPDF() {
-    const token = localStorage.getItem('token');
-    try {
-        const response = await fetch("http://127.0.0.1:8001/export-pdf", {
-            method: "POST",
-            headers: { 
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}` 
-            },
-            body: JSON.stringify(currentAnalysis)
-        });
-
-        if (!response.ok) {
-            const errData = await response.json();
-            alert("PDF Export Error: " + (errData.detail || "Server error"));
+        if (!username || !password) {
+            showMsg("Please enter username and password.");
             return;
         }
 
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = "LawLens_Legal_Report.pdf";
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-    } catch (err) {
-        alert("Failed to connect to server for PDF export.");
-    }
-}
+        const endpoint = isRegister ? "/register" : "/login";
+        const payload = { username, password, email: email || null };
 
-        checkAuth();
-    </script>
+        try {
+            const response = await fetch(`${API_BASE}${endpoint}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                showMsg(data.detail || "Server error.");
+            } else {
+                showMsg(data.message || (isRegister ? "Registered successfully!" : "Logged in!"), false);
+                if (isRegister) {
+                    setTimeout(() => toggleMode(), 1200);
+                }
+            }
+        } catch (err) {
+            console.error(err);
+            showMsg("Could not connect to server. Open backend link first to wake it up.");
+        }
+    }
+</script>
+
 </body>
 </html>
